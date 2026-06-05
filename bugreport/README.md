@@ -2,16 +2,27 @@
 
 A bug in **SPIDERS** (`https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w`)
 makes it generate labelings that are **not order ideals**, and on some inputs
-loop forever. This directory has the report, the original program, a corrected
-`spiders.w`, and the diff.
+loop forever. This directory has the report, the original program, and a CWEB
+change file with the fix.
 
 | file | what |
 |---|---|
-| [spiders.w.orig](spiders.w.orig) | the program as downloaded from Knuth's site |
-| [spiders.w](spiders.w) | the same program with the fix |
-| [spiders.diff](spiders.diff) | unified diff (orig → fixed) |
+| [spiders.w](spiders.w) | the program, exactly as downloaded from Knuth's site (unchanged) |
+| [spiders.ch](spiders.ch) | a CWEB **change file** carrying the fix |
 
-Reproduce: `ctangle spiders.w.orig && cc -o spiders spiders.c && ./spiders "....++-.+" 0`.
+The fix is delivered the CWEB way — as a change file, leaving the master `.w`
+untouched:
+
+```sh
+ctangle spiders.w           # buggy version
+cc -o spiders spiders.c
+./spiders "....++-.+" 0      # lists only 8 of 10 ideals (see below)
+
+ctangle spiders.w spiders.ch # fixed version
+cc -o spiders spiders.c
+./spiders "....++-.+" 0      # lists all 10
+cweave  spiders.w spiders.ch # the typeset fixed program
+```
 
 ## Summary
 
@@ -42,7 +53,7 @@ It has **10** order ideals. The published program lists only **8**, then walks
 off into illegal labelings:
 
 ```
-$ ctangle spiders.w.orig ; cc -o spiders spiders.c ; ./spiders "....++-.+" 0
+$ ctangle spiders.w ; cc -o spiders spiders.c ; ./spiders "....++-.+" 0
 00000
 01000
 01100
@@ -96,10 +107,10 @@ Each obeys a one-pass recursion over `k`'s children, and since §16 already runs
 `k` from `n` down to `1`, every child is finished before its parent. Then
 `umaxscope[k] = middeep0[k]` (or `k`) and `vmaxscope[k] = middeep1[k]` (or `k`).
 
-The fix is local (see [spiders.diff](spiders.diff)): it replaces the six lines
-above with one section, adds that section, and adds four `int[maxn]` arrays. It
-keeps the program loopless and the preprocessing **O(n)** — the recursion visits
-each child once. (A direct recomputation of these values is O(n²); the diff's
+The fix is local (see [spiders.ch](spiders.ch)): it replaces the six lines above
+with one section, adds that section, and adds four `int[maxn]` arrays. It keeps
+the program loopless and the preprocessing **O(n)** — the recursion visits each
+child once. (A direct recomputation of these values is O(n²); the change file's
 recursion gives the same values in O(n).)
 
 ## Verification
