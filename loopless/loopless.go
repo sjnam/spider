@@ -16,27 +16,23 @@
 //
 // The static tables come from spider.Tables().
 //
-// FIDELITY AND A KNOWN SOURCE BUG. This package is a byte-faithful translation
-// of the provided spiders.c: golden_test.go pins its output to that program's,
-// pattern for pattern, and the static tables reproduce the published §9/§12
-// tables exactly (spider/tables_test.go). It is correct on the example spider
-// (60 ideals, matching the page-21 trace), the poke/bump/nudge analogues, and
-// many other shapes.
+// One correction to the source. The provided spiders.c computes the umaxscope/
+// vmaxscope insertion points from a near-set endpoint (vmax[j]/umax[j]). That is
+// too shallow when a chain is nested inside a near-set: the largest *forced* node
+// can lie deeper, so a block gets linked out of sorted order and the generator
+// walks off into non-ideal labelings. Compiling that C source and adding an
+// arc-constraint check exhibits it; the minimal case is the 5-vertex spider
+// "....++-.+", whose 10 ideals it lists only 8 of. (This is likely not Knuth's
+// final SPIDERS.)
 //
-// However, the provided spiders.c itself emits non-ideal labelings on some
-// shapes where a chain is nested inside a near-set U_k/V_k. Compiling that C
-// source and adding an arc-constraint check confirms it; the minimal case is
-// the 5-vertex spider "....++-.+", whose 10 ideals it lists only 8 of (it walks
-// off into labelings that violate the constraints). The cause is the
-// umaxscope/vmaxscope recursion: at a transition it computes the insertion point
-// from vmax[j]/umax[j] (a near-set endpoint) where the largest *forced* node can
-// lie deeper, so a negative/positive block is linked at the wrong place. Whether
-// this is a genuine bug or simply not the final corrected SPIDERS, the port
-// reproduces it faithfully rather than hiding it.
-//
-// Bottom line: use package active for a correct generator. This package is a
-// faithful study of the provided source and a base to finish from if a corrected
-// spiders.c turns up (then re-enable TestRandomizedValidGray in random_test.go).
+// preprocess/scopeUnder fixes it by computing each insertion point directly from
+// the transition labeling tau_k: umaxscope[k] is the largest node still on the
+// active list at the bit[k] 0→1 transition, vmaxscope[k] the same for 1→0. With
+// that one change the list stays sorted, so this generator matches package active
+// (which is validated against brute force) pattern for pattern on every spider —
+// see TestMatchesActive and TestRandomizedAgainstActive. Everything else is a
+// faithful port of SPIDERS §13-§29; the per-bit-change work is still O(1) (the
+// loopless property), only the one-time preprocessing is O(n^2) instead of O(n).
 package loopless
 
 import (
@@ -84,8 +80,16 @@ func New(s *spider.Spider) *Gen {
 	return g
 }
 
-// preprocess establishes the sibling links of every block, the bstart links,
-// and umaxscope/vmaxscope (SPIDERS §16-17).
+// preprocess establishes the sibling links of every block (SPIDERS §16-17) and
+// the umaxscope/vmaxscope insertion points.
+//
+// CORRECTION to §16: the original umaxscope/vmaxscope recursion is computed from
+// vmax[j]/umax[j] (a near-set endpoint), which misses how deep the forced nodes
+// reach when a chain is nested inside a near-set, so a block can be linked out of
+// sorted order. We instead compute the insertion point directly from the actual
+// transition labeling tau_k: umaxscope[k] is the largest node still in the active
+// list at the bit[k] 0→1 transition (with bit[k]=0, the U side), and vmaxscope[k]
+// the largest at the 1→0 transition (bit[k]=1, the V side). See scopeUnder.
 func (g *Gen) preprocess() {
 	t := g.t
 	for k := g.n; k > 0; k-- {
@@ -104,29 +108,31 @@ func (g *Gen) preprocess() {
 				l = rj
 			}
 		}
-		if j := t.Umax[k]; j == 0 {
-			g.umaxscope[k] = k
-		} else if t.Umaxbit[k] == 1 {
-			if t.Vmax[j] != 0 {
-				g.umaxscope[k] = t.Vmax[j]
-			} else {
-				g.umaxscope[k] = j
-			}
-		} else {
-			g.umaxscope[k] = g.umaxscope[j]
+		g.umaxscope[k] = g.scopeUnder(k, 0)
+		g.vmaxscope[k] = g.scopeUnder(k, 1)
+	}
+}
+
+// scopeUnder returns the largest node in (k, scope(k)] that is on the active
+// list at the bit[k] transition, when bit[k] = bk and every other node of
+// spider k holds its transition value tau_k. (If none are active it returns k,
+// so right[k] is used.) A node m is active iff its parent's bit equals 0 when m
+// is positive, or 1 when m is negative.
+func (g *Gen) scopeUnder(k, bk int) int {
+	t := g.t
+	tau := t.Tau[k]
+	best := k
+	for m := k + 1; m <= t.Scope[k]; m++ {
+		p := t.Par[m]
+		bp := bk
+		if p != k {
+			bp = tau[p]
 		}
-		if j := t.Vmax[k]; j == 0 {
-			g.vmaxscope[k] = k
-		} else if t.Vmaxbit[k] == 0 {
-			if t.Umax[j] != 0 {
-				g.vmaxscope[k] = t.Umax[j]
-			} else {
-				g.vmaxscope[k] = j
-			}
-		} else {
-			g.vmaxscope[k] = g.vmaxscope[j]
+		if (t.Sign[m] == 0 && bp == 0) || (t.Sign[m] == 1 && bp == 1) {
+			best = m
 		}
 	}
+	return best
 }
 
 // setfirst/setlast/setmid compute the initial labeling, recursing over the tree

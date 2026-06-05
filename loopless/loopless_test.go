@@ -3,6 +3,7 @@ package loopless
 import (
 	"fmt"
 	"iter"
+	"slices"
 	"testing"
 
 	"github.com/sjnam/spider/active"
@@ -20,9 +21,6 @@ func collect[T any](seq iter.Seq[T]) []T {
 // testSpiders returns a varied set of spiders, several given as Polish strings.
 func testSpiders(t *testing.T) map[string]*spider.Spider {
 	t.Helper()
-	// Shapes the provided spiders.c handles correctly (the poke/bump/nudge
-	// analogues plus the running example). Some other shapes are mishandled by
-	// that source — see the package comment — so they are intentionally absent.
 	m := map[string]*spider.Spider{
 		"example": spider.Example(),
 		"noarcs6": spider.NoArcs(6),
@@ -30,9 +28,12 @@ func testSpiders(t *testing.T) map[string]*spider.Spider {
 		"fence8":  spider.Fence(8),
 	}
 	polish := []string{
-		"...+-",             // 1 -> 2 <- 3 (Section 2 example)
-		"....+-.--..+-..-+", // the running example again
-		".....----",         // a positive chain of 5
+		"...+-",               // 1 -> 2 <- 3 (Section 2 example)
+		"....+-.--..+-..-+",    // the running example again
+		".....----",           // a positive chain of 5
+		"....++-.+",           // chain nested in a near-set (the §16-bug minimal case)
+		".....---..+++.+..++",  // a larger chain-in-near-set shape
+		"..+....+--.+..-+-.+",  // another mixed shape
 	}
 	for _, p := range polish {
 		s, err := spider.Parse(p)
@@ -44,27 +45,22 @@ func testSpiders(t *testing.T) map[string]*spider.Spider {
 	return m
 }
 
-// TestSameIdealSetAsActive checks the loopless generator enumerates exactly the
-// same set of ideals as the (brute-force-validated) package active. The ORDER
-// may differ — SPIDERS' focus[left[0]] rule isn't always the largest awake node
-// — so this compares the visited sets, not the sequences. (Order is pinned to
-// the real SPIDERS program in golden_test.go.)
-func TestSameIdealSetAsActive(t *testing.T) {
+// TestMatchesActive checks the loopless generator produces exactly the same
+// Gray listing as the (brute-force-validated) package active, pattern for
+// pattern. With the corrected umaxscope/vmaxscope (see preprocess) the list
+// stays sorted, so loopless picks the same largest-awake node as active.
+func TestMatchesActive(t *testing.T) {
 	for name, s := range testSpiders(t) {
-		loop := map[string]bool{}
-		for p := range Sequence(s) {
-			loop[fmt.Sprint(p)] = true
+		got := collect(Sequence(s))
+		want := collect(active.Sequence(s))
+		if len(got) != len(want) {
+			t.Errorf("%s: loopless %d patterns, active %d", name, len(got), len(want))
+			continue
 		}
-		act := map[string]bool{}
-		for p := range active.Sequence(s) {
-			act[fmt.Sprint(p)] = true
-		}
-		if len(loop) != len(act) {
-			t.Errorf("%s: loopless visited %d ideals, active %d", name, len(loop), len(act))
-		}
-		for k := range act {
-			if !loop[k] {
-				t.Errorf("%s: loopless missing ideal %s", name, k)
+		for i := range got {
+			if !slices.Equal(got[i], want[i]) {
+				t.Errorf("%s: step %d loopless %v, active %v", name, i, got[i], want[i])
+				break
 			}
 		}
 	}

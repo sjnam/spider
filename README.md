@@ -40,12 +40,17 @@ spider/
 ├── poke/      §1 무제약        — 표준 반사 그레이 코드 (2^n 패턴)
 ├── bump/      §2 체인          — 0 ≤ a1 ≤ … ≤ an ≤ 1 (n+1 패턴)
 ├── nudge/     §3 울타리        — a1 ≤ a2 ≥ a3 ≤ … (초기화가 까다로움)
-├── spider/    B1 거미 데이터 모델 (자식/부호/scope, 근접집합 U_k/V_k, ideal 개수 n_k)
-│              B2 §6 launching (초기 설정 α, 전이 τ, 최종 ω)
-│              + brute-force 정답 열거기 (AllIdeals)
+├── spider/    거미 데이터 모델 (자식/부호/scope, 근접집합 U_k/V_k, ideal 개수 n_k)
+│              §6 launching (초기 설정 α, 전이 τ, 최종 ω)
+│              SPIDERS §7–12 테이블, Polish 표기 Parse, brute-force 열거기
 ├── active/    §8 active list 생성기 — 임의의 거미를 amortized O(1)로
+├── loopless/  §13–29 loopless 생성기 (Knuth의 SPIDERS C 프로그램 포팅, O(1)/step)
 └── main.go    데모 드라이버
 ```
+
+> `loopless`를 만들며 제공된 `spiders.c`가 근접집합에 체인이 중첩된 모양(최소 예 `....++-.+`)에서
+> **비-ideal을 생성하는 버그**를 발견했습니다. `umaxscope`/`vmaxscope` 삽입 위치를 전이 라벨링 τ_k에서
+> 직접 계산하도록 **고쳐서**, 무작위 500개 포함 모든 거미에서 brute-force 검증된 `active`와 일치합니다.
 
 ## 빠른 시작
 
@@ -109,7 +114,7 @@ active list — spider=example  (60 ideals, generated in Gray order)
 
 ## 더 해볼 수 있는 것
 
-- [ ] **§9 loopless $O(1)$** — focus pointer + lazy family update (현재 `active`의 삽입은 정렬 스캔).
+- [x] **§13–29 loopless $O(1)$/step** — `loopless` 패키지 (focus 포인터 + lazy fixup). 제공된 `spiders.c`의 `umaxscope`/`vmaxscope` 버그를 고쳐 `active`와 완전 일치.
 - [ ] **일반 `gen` 코루틴 (§5)** — `maxu`/`maxv`/`prev` 테이블로 poke/bump/nudge를 통합하는 goroutine 버전.
 - [ ] **TUI 시각화** — 거미와 active list를 실시간 애니메이션.
 

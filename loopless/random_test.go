@@ -1,11 +1,12 @@
 package loopless
 
 import (
-	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/sjnam/spider/active"
 	"github.com/sjnam/spider/spider"
 )
 
@@ -34,26 +35,13 @@ func randomPolish(n int, rng *rand.Rand) string {
 	return sb.String()
 }
 
-// TestRandomizedValidGray stresses the block/fixup logic on hundreds of random
-// spider shapes, requiring the loopless output to be a complete single-bit Gray
-// listing of every ideal.
-//
-// It deliberately does NOT compare against package active. SPIDERS selects the
-// next node with focus[left[0]] (the right end of its doubly linked list), which
-// is not always the largest-numbered awake node, so on some shapes it walks the
-// ideals in a different — but equally valid — Gray order than active's strictly
-// sorted list. Exact agreement with the real SPIDERS program is pinned by
-// golden_test.go.
-func TestRandomizedValidGray(t *testing.T) {
-	// SKIPPED: this would fail, but the fault is in the provided spiders.c, not
-	// the port. Compiling that C source and adding an arc-constraint check shows
-	// it emits non-ideal labelings on some shapes where a chain is nested inside
-	// a near-set; the minimal case is "....++-.+" (it lists 8 of the 10 ideals).
-	// The loopless port reproduces that source byte for byte (golden_test.go), so
-	// it inherits the limitation. Package active is the correct generator. Remove
-	// this Skip if a corrected spiders.c becomes available.
-	t.Skip("provided spiders.c mishandles some chain-in-near-set shapes; see package doc")
-
+// TestRandomizedAgainstActive stresses the block/fixup logic on hundreds of
+// random spider shapes, requiring the corrected loopless generator to match
+// package active (which is validated against brute force) pattern for pattern.
+// This is what previously failed on chain-in-near-set shapes and is now fixed by
+// computing the umaxscope/vmaxscope insertion points from the transition labeling
+// (see preprocess/scopeUnder).
+func TestRandomizedAgainstActive(t *testing.T) {
 	rng := rand.New(rand.NewSource(20260605))
 	for trial := 0; trial < 500; trial++ {
 		n := 1 + rng.Intn(10)
@@ -64,29 +52,13 @@ func TestRandomizedValidGray(t *testing.T) {
 		}
 
 		got := collect(Sequence(s))
-		if len(got) != s.Total() {
-			t.Fatalf("spider %q: %d patterns, want %d", p, len(got), s.Total())
+		want := collect(active.Sequence(s))
+		if len(got) != len(want) {
+			t.Fatalf("spider %q: loopless %d patterns, active %d", p, len(got), len(want))
 		}
-		seen := map[string]bool{}
-		for i, pat := range got {
-			if !s.IsIdeal(pat) {
-				t.Fatalf("spider %q: non-ideal %v", p, pat)
-			}
-			if k := fmt.Sprint(pat); seen[k] {
-				t.Fatalf("spider %q: repeat %v", p, pat)
-			} else {
-				seen[k] = true
-			}
-			if i > 0 {
-				d := 0
-				for b := range pat {
-					if pat[b] != got[i-1][b] {
-						d++
-					}
-				}
-				if d != 1 {
-					t.Fatalf("spider %q: %v -> %v differ in %d bits", p, got[i-1], pat, d)
-				}
+		for i := range got {
+			if !slices.Equal(got[i], want[i]) {
+				t.Fatalf("spider %q: step %d loopless %v, active %v", p, i, got[i], want[i])
 			}
 		}
 	}

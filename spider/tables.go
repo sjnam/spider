@@ -78,7 +78,8 @@ type Tables struct {
 	Umin, Vmin       []int
 	Ueven, Veven     []int
 	Umaxbit, Vmaxbit []int
-	Bit0             []int // initial labeling, indexed 0..N with Bit0[0]=0
+	Bit0             []int   // initial labeling, indexed 0..N with Bit0[0]=0
+	Tau              [][]int // Tau[k][i] = transition bit of i in G_k (Tau[k][k] = -1)
 }
 
 // Tables returns the static tables the loopless generator is built on.
@@ -91,6 +92,10 @@ func (s *Spider) Tables() Tables {
 	bit := make([]int, n+1)
 	init := s.Initial()
 	copy(bit[1:], init)
+	tau := make([][]int, n+1)
+	for k := 1; k <= n; k++ {
+		tau[k] = slices.Clone(s.tau[k])
+	}
 	return Tables{
 		N: n, Inf: inf,
 		Par: slices.Clone(s.parent), Sign: sign, Scope: slices.Clone(s.scope),
@@ -99,7 +104,7 @@ func (s *Spider) Tables() Tables {
 		Umin: slices.Clone(s.umin), Vmin: slices.Clone(s.vmin),
 		Ueven: slices.Clone(s.ueven), Veven: slices.Clone(s.veven),
 		Umaxbit: slices.Clone(s.umaxbit), Vmaxbit: slices.Clone(s.vmaxbit),
-		Bit0: bit,
+		Bit0: bit, Tau: tau,
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/sjnam/spider/active"
 	"github.com/sjnam/spider/bump"
+	"github.com/sjnam/spider/loopless"
 	"github.com/sjnam/spider/nudge"
 	"github.com/sjnam/spider/poke"
 	"github.com/sjnam/spider/spider"
@@ -26,16 +27,23 @@ type trolls interface {
 	Close()
 }
 
+// listGen is the surface the active-list generators (active, loopless) share.
+type listGen interface {
+	Next() bool
+	Bits() []int
+	Active() (nodes []int, asleep []bool)
+}
+
 func main() {
-	coro := flag.String("coro", "poke", "poke, bump, nudge, or active")
+	coro := flag.String("coro", "poke", "poke, bump, nudge, active, or loopless")
 	n := flag.Int("n", 3, "number of trolls/bits (poke, bump, nudge)")
 	periods := flag.Int("periods", 1, "how many full periods to print (poke, bump, nudge)")
-	which := flag.String("spider", "example", "spider for -coro active: example, noarcs, chain, fence, or a Polish string like \"...+-\"")
-	steps := flag.Int("steps", 0, "steps to print for -coro active (0 = one full listing)")
+	which := flag.String("spider", "example", "spider for -coro active/loopless: example, noarcs, chain, fence, or a Polish string like \"...+-\"")
+	steps := flag.Int("steps", 0, "steps to print for -coro active/loopless (0 = one full listing)")
 	flag.Parse()
 
-	if *coro == "active" {
-		runActive(*which, *n, *steps)
+	if *coro == "active" || *coro == "loopless" {
+		runActive(*coro, *which, *n, *steps)
 		return
 	}
 	runTrolls(*coro, *n, *periods)
@@ -79,7 +87,7 @@ func runTrolls(coro string, n, periods int) {
 	}
 }
 
-func runActive(which string, n, steps int) {
+func runActive(engine, which string, n, steps int) {
 	var s *spider.Spider
 	switch which {
 	case "example":
@@ -98,9 +106,14 @@ func runActive(which string, n, steps int) {
 			return
 		}
 	}
-	fmt.Printf("active list — spider=%s  (%d ideals, generated in Gray order)\n\n", which, s.Total())
+	fmt.Printf("%s — spider=%s  (%d ideals, generated in Gray order)\n\n", engine, which, s.Total())
 
-	g := active.New(s)
+	var g listGen
+	if engine == "loopless" {
+		g = loopless.New(s)
+	} else {
+		g = active.New(s)
+	}
 	limit := steps
 	if limit == 0 {
 		limit = s.Total() - 1 // one full forward listing
@@ -121,7 +134,7 @@ const (
 )
 
 // listStr renders the active list, underlining the asleep nodes.
-func listStr(g *active.Gen) string {
+func listStr(g listGen) string {
 	nodes, asleep := g.Active()
 	var b strings.Builder
 	for i, k := range nodes {
@@ -136,7 +149,7 @@ func listStr(g *active.Gen) string {
 
 // bitsAsleep renders the pattern, underlining bit a_j when node j is asleep and
 // on the active list — exactly the paper's left-column convention.
-func bitsAsleep(g *active.Gen) string {
+func bitsAsleep(g listGen) string {
 	bits := g.Bits()
 	nodes, asleep := g.Active()
 	down := make(map[int]bool)
