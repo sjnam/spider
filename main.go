@@ -30,7 +30,7 @@ func main() {
 	coro := flag.String("coro", "poke", "poke, bump, nudge, or active")
 	n := flag.Int("n", 3, "number of trolls/bits (poke, bump, nudge)")
 	periods := flag.Int("periods", 1, "how many full periods to print (poke, bump, nudge)")
-	which := flag.String("spider", "example", "spider for -coro active: example, noarcs, chain, fence")
+	which := flag.String("spider", "example", "spider for -coro active: example, noarcs, chain, fence, or a Polish string like \"...+-\"")
 	steps := flag.Int("steps", 0, "steps to print for -coro active (0 = one full listing)")
 	flag.Parse()
 
@@ -91,8 +91,12 @@ func runActive(which string, n, steps int) {
 	case "fence":
 		s = spider.Fence(n)
 	default:
-		fmt.Printf("unknown -spider %q (want example, noarcs, chain, fence)\n", which)
-		return
+		var err error
+		s, err = spider.Parse(which) // treat anything else as a Polish description
+		if err != nil {
+			fmt.Printf("unknown -spider %q: not a name (example, noarcs, chain, fence) and %v\n", which, err)
+			return
+		}
 	}
 	fmt.Printf("active list — spider=%s  (%d ideals, generated in Gray order)\n\n", which, s.Total())
 

@@ -31,7 +31,20 @@ type Spider struct {
 	// [k, scope(k)]. alpha/omega are the first/last patterns of the Gray path
 	// G_k; tau is the transition (with tau[k] = -1 marking the bit that flips).
 	alpha, omega, tau [][]int
+
+	// Implicit U_k/V_k representation and parity tables, ported from Knuth's
+	// SPIDERS program (§7-§12). Index 0 is the dummy root. See tables.go.
+	rchild, lsib     []int // rightmost child, left sibling (0 = none)
+	ppro, npro       []int // positive / negative progenitors
+	prv              []int // previous element in the same progenitorial list
+	umax, vmax       []int // largest elements of U_k, V_k (0 = empty)
+	umin, vmin       []int // smallest elements of U_k, V_k (inf = empty)
+	ueven, veven     []int // smallest u in U_k / v in V_k with n_u / n_v even
+	umaxbit, vmaxbit []int // bit[umax_k] / bit[vmax_k] at the bit[k] transition
 }
+
+// inf represents ∞ in the umin/vmin/ueven/veven tables (SPIDERS uses maxn).
+const inf = 1 << 30
 
 // New builds a spider on vertices 1..n. parent and positive are 1-indexed
 // slices of length n+1 (index 0 is ignored); parent[k]==0 marks a component
@@ -82,6 +95,7 @@ func New(n int, parent []int, positive []bool) *Spider {
 		s.count[k] = nP + nV
 		s.computeLaunch(k)
 	}
+	s.computeTables()
 	return s
 }
 
