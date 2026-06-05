@@ -1,73 +1,93 @@
 # spider
 
-Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/p160.ps.gz)** (Ole-Johan Dahl 추모 헌정)에 나오는 알고리즘들을 Go로 충실히 구현한 프로젝트입니다.
+A faithful Go implementation of the algorithms in Knuth & Ruskey's paper
+**["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/p160.ps.gz)**
+(dedicated to the memory of Ole-Johan Dahl).
 
-저자들이 익살스럽게 **"spider squishing"** 이라 부르는 문제를 다룹니다.
+The authors playfully call the problem **"spider squishing."**
 
-## 무슨 문제인가
+## The problem
 
-주어진 **방향 그래프**의 제약을 만족하는 모든 비트 문자열 $a_1 a_2 \dots a_n \in \{0,1\}^n$ 을 생성합니다. 제약은 간선 $j \to k$ 마다 $a_j \le a_k$ (즉 $a_j=1 \Rightarrow a_k=1$). 이는 형식적으로 **"비순환 poset의 order ideal을 모두 생성하는 문제"** 입니다.
+Generate every bit string $a_1 a_2 \dots a_n \in \{0,1\}^n$ satisfying the
+constraints of a given **directed graph**: for each arc $j \to k$, $a_j \le a_k$
+(i.e. $a_j=1 \Rightarrow a_k=1$). Formally this is **"generating all order ideals
+of an acyclic poset."**
 
-여기에 더해 **그레이 경로(Gray path)** 로 — 한 단계에 정확히 비트 하나만 바뀌도록 — 나열합니다.
+On top of that, list them as a **Gray path** — changing exactly one bit per step.
 
-무향 그래프로 봐도 사이클이 없는 경우(_totally acyclic_)를 **거미(spider)** 라 부르며, 이때 그레이 경로가 항상 존재하고 **비트 변화당 상수 시간**에 생성할 수 있다는 것이 논문의 핵심 결과입니다.
+When the graph has no cycles even with arc directions ignored (_totally
+acyclic_) it is called a **spider**, and the paper's key result is that a Gray
+path always exists and can be generated in **constant time per bit change**.
 
-```bash
-  3   5          제약: a1≤a2≤a3, a4≤a3, a2≤a5 ...
-   \ / \         정점을 0/1로 켜고 끄되,
-    2   6   8    매 단계 한 비트만 바꾸며
-     \  |  /     모든 유효 조합을 훑는다.
+```text
+  3   5          constraints: a1≤a2≤a3, a4≤a3, a2≤a5, ...
+   \ / \         flip each vertex 0/1,
+    2   6   8    changing one bit at a time,
+     \  |  /     and sweep through every valid combination.
         1
 ```
 
-## 두 개의 세계, 서로를 검증하다
+## Two worlds that check each other
 
-논문은 같은 알고리즘을 두 가지 방식으로 제시하는데, 이 저장소는 **둘 다** 구현하고 **서로의 정답지로** 교차검증합니다.
+The paper presents the same algorithm two ways; this repo implements **both** and
+**cross-validates each against the other.**
 
-| 세계 | 패키지 | 정체 |
+| world | packages | what it is |
 | --- | --- | --- |
-| **협력하는 코루틴 (트롤)** | `poke` `bump` `nudge` | 각 트롤 $T_k$ 를 goroutine 하나로. 논문 의사코드를 거의 한 줄씩 옮긴 충실한 버전. |
-| **active list** | `active` | 위 코루틴 무리를 명시적 자료구조 + 반복 루프로 "컴파일"한 효율 버전 (amortized $O(1)$). |
+| **cooperating coroutines (trolls)** | `poke` `bump` `nudge` | each troll $T_k$ is one goroutine — a near-line-by-line transcription of the paper's pseudocode. |
+| **active list** | `active` | the same coroutine swarm "compiled" into an explicit data structure + an iterative loop (amortized $O(1)$). |
 
-핵심 트릭은 `ret`/`invoke` 헬퍼로 **goroutine의 실행 위치(PC)가 곧 코루틴의 상태**가 되게 한 것입니다. 덕분에 명시적 상태 기계 없이 논문의 코루틴을 그대로 옮길 수 있습니다 (`nudge`는 사이클 중간 진입을 `goto` 한 줄로 처리).
+The key trick is the `ret`/`invoke` helpers, which make **a goroutine's program
+counter serve as the coroutine's state**. That lets the paper's coroutines be
+transcribed with no explicit state machine (`nudge` even enters its cycle
+mid-stream with a single `goto`).
 
-그리고 두 세계의 출력이 특수 케이스에서 **패턴 단위로 완전히 일치**함을 테스트로 못 박았습니다 — 논문 §8의 주장("the three steps faithfully implement those coroutines")을 실증한 셈입니다.
+The two worlds produce **identical output, pattern for pattern**, on the special
+cases — a test-enforced demonstration of the paper's §8 claim that "the three
+steps faithfully implement those coroutines."
 
-## 패키지 구성
+## Package layout
 
-```bash
+```text
 spider/
-├── poke/      §1 무제약        — 표준 반사 그레이 코드 (2^n 패턴)
-├── bump/      §2 체인          — 0 ≤ a1 ≤ … ≤ an ≤ 1 (n+1 패턴)
-├── nudge/     §3 울타리        — a1 ≤ a2 ≥ a3 ≤ … (초기화가 까다로움)
-├── spider/    거미 데이터 모델 (자식/부호/scope, 근접집합 U_k/V_k, ideal 개수 n_k)
-│              §6 launching (초기 설정 α, 전이 τ, 최종 ω)
-│              SPIDERS §7–12 테이블, Polish 표기 Parse, brute-force 열거기
-├── active/    §8 active list 생성기 — 임의의 거미를 amortized O(1)로
-├── loopless/  §13–29 loopless 생성기 (Knuth의 SPIDERS C 프로그램 포팅, O(1)/step)
-└── main.go    데모 드라이버
+├── poke/      §1 unconstrained  — standard reflected Gray code (2^n patterns)
+├── bump/      §2 chain          — 0 ≤ a1 ≤ … ≤ an ≤ 1 (n+1 patterns)
+├── nudge/     §3 fence          — a1 ≤ a2 ≥ a3 ≤ … (tricky initialization)
+├── spider/    spider data model (children/sign/scope, near-sets U_k/V_k, ideal counts n_k)
+│              §6 launching (initial α, transition τ, final ω)
+│              SPIDERS §7–12 tables, Polish-notation Parse, brute-force enumerator
+├── active/    §8 active-list generator — any spider, amortized O(1)
+├── loopless/  §13–29 loopless generator (port of Knuth's SPIDERS C program, O(1)/step)
+├── bugreport/ a real bug found in Knuth's SPIDERS, with a CWEB change-file fix
+└── main.go    demo driver
 ```
 
-> `loopless`를 만들며 제공된 `spiders.c`가 근접집합에 체인이 중첩된 모양(최소 예 `....++-.+`)에서
-> **비-ideal을 생성하는 버그**를 발견했습니다. `umaxscope`/`vmaxscope` 삽입 위치를 전이 라벨링 τ_k에서
-> 직접 계산하도록 **고쳐서**, 무작위 500개 포함 모든 거미에서 brute-force 검증된 `active`와 일치합니다.
+> **We found a real bug in Knuth's published SPIDERS program.** While building
+> `loopless`, the provided `spiders.c` turned out to emit _non-ideal_ labelings
+> (and on some inputs loop forever) when a chain is nested inside a near-set —
+> the minimal case is the 5-vertex spider `....++-.+`. The fault is in §16's
+> `umaxscope`/`vmaxscope` recursion. We corrected it (computing the insertion
+> point from the transition labeling τ_k), so `loopless` now matches the
+> brute-force-validated `active` on every spider, including 500 random ones. The
+> report, the unchanged master `spiders.w`, and a CWEB **change file** with the
+> fix live in [`bugreport/`](bugreport/).
 
-## 빠른 시작
+## Quick start
 
 ```bash
-go test ./...           # 전체 검증
-go test -race ./...     # 코루틴 동시성 검증
+go test ./...           # full verification
+go test -race ./...     # coroutine concurrency check
 ```
 
-### 코루틴 데모 (§1–3)
+### Coroutine demo (§1–3)
 
 ```bash
-go run . -coro poke  -n 3        # 표준 그레이 코드
-go run . -coro bump  -n 3        # 체인
-go run . -coro nudge -n 4        # 울타리
+go run . -coro poke  -n 3        # standard Gray code
+go run . -coro bump  -n 3        # chain
+go run . -coro nudge -n 4        # fence
 ```
 
-```bash
+```text
 $ go run . -coro bump -n 3
 bump trolls — n=3  (chain: 0 <= a_1 <= … <= a_n <= 1)
 
@@ -80,46 +100,63 @@ bump trolls — n=3  (chain: 0 <= a_1 <= … <= a_n <= 1)
 ...
 ```
 
-출력의 패턴 열과 트롤 호출 집합이 논문 5·7·11쪽 표와 정확히 일치합니다.
+The pattern column and the set of trolls each poke wakes match the tables on
+pages 5, 7, and 11 of the paper exactly.
 
-### active list 데모 (§8)
+### Active-list / loopless demo (§8, §13–29)
 
 ```bash
-go run . -coro active -spider example      # 논문 §4의 9정점 예제 거미 (60개 ideal)
-go run . -coro active -spider chain  -n 5
-go run . -coro active -spider fence  -n 6
+go run . -coro active   -spider example     # the 9-vertex example of §4 (60 ideals)
+go run . -coro loopless -spider example     # same, via the loopless generator
+go run . -coro active   -spider chain -n 5
+go run . -coro active   -spider '....++-.+' # any spider as a Polish string
 ```
 
-```bash
+```text
 $ go run . -coro active -spider example
 active list — spider=example  (60 ideals, generated in Gray order)
 
 000001100   1235679
-000001101   1235679     ← 자는 노드는 터미널에서 밑줄로 표시
+000001101   1235679     ← asleep nodes are underlined in the terminal
 000001001   1235679
 ...
-011011100   124679      ← P1 → Q1 전이 (48번째 패턴)
-111011100   14789          양의 자식 2,6 이 음의 자식 8 로 교체
+011011100   124679      ← the P1 → Q1 transition (48th pattern)
+111011100   14789          positive children 2,6 replaced by negative child 8
 ...
-111111100   14789       ← 최종 상태
+111111100   14789       ← final state
 ```
 
-이 추적은 논문 21쪽 예제를 글자 단위로 재현합니다.
+This trace reproduces the example on page 21 of the paper character for character.
 
-## 검증 내용
+## What is verified
 
-- **`poke`/`bump`/`nudge`** — 매 단계 1비트 변화, 모든 유효 패턴을 정확히 한 번씩, 그리고 논문 예제 표와 비트 단위 일치 (`-race` 클린).
-- **`spider`** — 예제 거미의 `U_1={2,6,9}`, `V_1={4,7,8}`, scope, 개수 `n_k`(총 **60**), 그리고 §6 launch 표(α/τ/ω)가 논문 12·16·18쪽과 정확히 일치. brute-force 열거기로 개수 교차검증.
-- **`active`** — NoArcs/Chain/Fence에서 `poke`/`bump`/`nudge`와 **출력 완전 일치**, 임의 혼합 거미에서 `AllIdeals`와 일치하는 완전한 그레이 코드, 논문 21쪽 추적 재현.
+- **`poke`/`bump`/`nudge`** — one bit per step, every valid pattern exactly
+  once, and bit-for-bit agreement with the paper's example tables (`-race` clean).
+- **`spider`** — the example spider's `U_1={2,6,9}`, `V_1={4,7,8}`, scope, counts
+  `n_k` (total **60**), and the §6 launch table (α/τ/ω) all match pages 12, 16,
+  and 18; counts cross-checked with a brute-force enumerator.
+- **`active`** — exact output match with `poke`/`bump`/`nudge` on
+  NoArcs/Chain/Fence, a complete Gray code agreeing with `AllIdeals` on arbitrary
+  mixed spiders, and the page-21 trace.
+- **`loopless`** — matches `active` pattern for pattern on every spider (named,
+  Polish, and 500 random), after correcting the SPIDERS `umaxscope`/`vmaxscope`
+  bug; the fix is verified exhaustively over all spiders with ≤ 8 vertices.
 
-## 더 해볼 수 있는 것
+## Possible next steps
 
-- [x] **§13–29 loopless $O(1)$/step** — `loopless` 패키지 (focus 포인터 + lazy fixup). 제공된 `spiders.c`의 `umaxscope`/`vmaxscope` 버그를 고쳐 `active`와 완전 일치.
-- [ ] **일반 `gen` 코루틴 (§5)** — `maxu`/`maxv`/`prev` 테이블로 poke/bump/nudge를 통합하는 goroutine 버전.
-- [ ] **TUI 시각화** — 거미와 active list를 실시간 애니메이션.
+- [x] **§13–29 loopless $O(1)$/step** — the `loopless` package (focus pointers +
+  lazy fixups), with the SPIDERS `umaxscope`/`vmaxscope` bug fixed; matches `active`.
+- [ ] **general `gen` coroutines (§5)** — a goroutine version unifying
+  poke/bump/nudge via the `maxu`/`maxv`/`prev` tables.
+- [ ] **TUI visualization** — animate the spider and the active list live.
 
-## 참고 문헌
+## References
 
-- D. E. Knuth and F. Ruskey, _Efficient Coroutine Generation of Constrained Gray Sequences_. In _From Object-Orientation to Formal Methods: Essays in Memory of Ole-Johan Dahl_, LNCS 2635 (2004), 183–204.
-- Y. Koda and F. Ruskey, _A Gray code for the ideals of a forest poset_, Journal of Algorithms **15** (1993), 324–340.
-- D. E. Knuth, _The Art of Computer Programming_, Vol. 4, §7.2.1.1 (Generating all $n$-tuples).
+- D. E. Knuth and F. Ruskey, _Efficient Coroutine Generation of Constrained Gray
+  Sequences_. In _From Object-Orientation to Formal Methods: Essays in Memory of
+  Ole-Johan Dahl_, LNCS 2635 (2004), 183–204.
+- Y. Koda and F. Ruskey, _A Gray code for the ideals of a forest poset_, Journal
+  of Algorithms **15** (1993), 324–340.
+- D. E. Knuth, _The Art of Computer Programming_, Vol. 4, §7.2.1.1 (Generating
+  all $n$-tuples).
+- D. E. Knuth, _SPIDERS_, `https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w`.
