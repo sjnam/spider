@@ -1,4 +1,4 @@
-# spider
+# SPIDERS
 
 A faithful Go implementation of the algorithms in Knuth & Ruskey's paper
 **["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/p160.ps.gz)**

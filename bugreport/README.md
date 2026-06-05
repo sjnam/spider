@@ -6,7 +6,7 @@ loop forever. This directory has the report, the original program, and a CWEB
 change file with the fix.
 
 | file | what |
-|---|---|
+| --- | --- |
 | [spiders.w](spiders.w) | the program, exactly as downloaded from Knuth's site (unchanged) |
 | [spiders.ch](spiders.ch) | a CWEB **change file** carrying the fix |
 
@@ -39,7 +39,7 @@ insertion points used by §28/§29 when a block of children enters the active li
 The smallest failing digraph has **5 vertices**, written `....++-.+` in the
 program's Polish notation:
 
-```
+```bash
         1            arcs (all "x → y means bit[x] ≤ bit[y]"):
        / \             1 → 2     (2 is a positive child of 1)
       2   5            3 → 2     (3 is a negative child of 2)
@@ -52,7 +52,7 @@ program's Polish notation:
 It has **10** order ideals. The published program lists only **8**, then walks
 off into illegal labelings:
 
-```
+```bash
 $ ctangle spiders.w ; cc -o spiders spiders.c ; ./spiders "....++-.+" 0
 00000
 01000
