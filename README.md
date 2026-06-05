@@ -1,6 +1,6 @@
 # spider
 
-Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/spider.pdf)** (Ole-Johan Dahl 추모 헌정)에 나오는 알고리즘들을 Go로 충실히 구현한 프로젝트입니다.
+Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/p160.ps.gz)** (Ole-Johan Dahl 추모 헌정)에 나오는 알고리즘들을 Go로 충실히 구현한 프로젝트입니다.
 
 저자들이 익살스럽게 **"spider squishing"** 이라 부르는 문제를 다룹니다.
 
@@ -12,7 +12,7 @@ Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray 
 
 무향 그래프로 봐도 사이클이 없는 경우(_totally acyclic_)를 **거미(spider)** 라 부르며, 이때 그레이 경로가 항상 존재하고 **비트 변화당 상수 시간**에 생성할 수 있다는 것이 논문의 핵심 결과입니다.
 
-```
+```bash
   3   5          제약: a1≤a2≤a3, a4≤a3, a2≤a5 ...
    \ / \         정점을 0/1로 켜고 끄되,
     2   6   8    매 단계 한 비트만 바꾸며
@@ -25,7 +25,7 @@ Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray 
 논문은 같은 알고리즘을 두 가지 방식으로 제시하는데, 이 저장소는 **둘 다** 구현하고 **서로의 정답지로** 교차검증합니다.
 
 | 세계 | 패키지 | 정체 |
-|---|---|---|
+| --- | --- | --- |
 | **협력하는 코루틴 (트롤)** | `poke` `bump` `nudge` | 각 트롤 $T_k$ 를 goroutine 하나로. 논문 의사코드를 거의 한 줄씩 옮긴 충실한 버전. |
 | **active list** | `active` | 위 코루틴 무리를 명시적 자료구조 + 반복 루프로 "컴파일"한 효율 버전 (amortized $O(1)$). |
 
@@ -35,7 +35,7 @@ Knuth & Ruskey의 논문 **["Efficient Coroutine Generation of Constrained Gray 
 
 ## 패키지 구성
 
-```
+```bash
 spider/
 ├── poke/      §1 무제약        — 표준 반사 그레이 코드 (2^n 패턴)
 ├── bump/      §2 체인          — 0 ≤ a1 ≤ … ≤ an ≤ 1 (n+1 패턴)
@@ -62,7 +62,7 @@ go run . -coro bump  -n 3        # 체인
 go run . -coro nudge -n 4        # 울타리
 ```
 
-```
+```bash
 $ go run . -coro bump -n 3
 bump trolls — n=3  (chain: 0 <= a_1 <= … <= a_n <= 1)
 
@@ -85,7 +85,7 @@ go run . -coro active -spider chain  -n 5
 go run . -coro active -spider fence  -n 6
 ```
 
-```
+```bash
 $ go run . -coro active -spider example
 active list — spider=example  (60 ideals, generated in Gray order)
 
@@ -109,12 +109,12 @@ active list — spider=example  (60 ideals, generated in Gray order)
 
 ## 더 해볼 수 있는 것
 
-- **§9 loopless $O(1)$** — focus pointer + lazy family update (현재 `active`의 삽입은 정렬 스캔).
-- **일반 `gen` 코루틴 (§5)** — `maxu`/`maxv`/`prev` 테이블로 poke/bump/nudge를 통합하는 goroutine 버전.
-- **TUI 시각화** — 거미와 active list를 실시간 애니메이션.
+- [ ] **§9 loopless $O(1)$** — focus pointer + lazy family update (현재 `active`의 삽입은 정렬 스캔).
+- [ ] **일반 `gen` 코루틴 (§5)** — `maxu`/`maxv`/`prev` 테이블로 poke/bump/nudge를 통합하는 goroutine 버전.
+- [ ] **TUI 시각화** — 거미와 active list를 실시간 애니메이션.
 
 ## 참고 문헌
 
-- D. E. Knuth and F. Ruskey, *Efficient Coroutine Generation of Constrained Gray Sequences*. In _From Object-Orientation to Formal Methods: Essays in Memory of Ole-Johan Dahl_, LNCS 2635 (2004), 183–204.
-- Y. Koda and F. Ruskey, *A Gray code for the ideals of a forest poset*, Journal of Algorithms **15** (1993), 324–340.
-- D. E. Knuth, *The Art of Computer Programming*, Vol. 4, §7.2.1.1 (Generating all $n$-tuples).
+- D. E. Knuth and F. Ruskey, _Efficient Coroutine Generation of Constrained Gray Sequences_. In _From Object-Orientation to Formal Methods: Essays in Memory of Ole-Johan Dahl_, LNCS 2635 (2004), 183–204.
+- Y. Koda and F. Ruskey, _A Gray code for the ideals of a forest poset_, Journal of Algorithms **15** (1993), 324–340.
+- D. E. Knuth, _The Art of Computer Programming_, Vol. 4, §7.2.1.1 (Generating all $n$-tuples).
