@@ -31,9 +31,9 @@ import (
 
 // Gen drives the active-list generation of a spider's order ideals.
 type Gen struct {
-	s    *spider.Spider
-	n    int
-	a    []int // a[1..n]; a[0] unused
+	s *spider.Spider
+	n int
+	a []int // a[1..n]; a[0] unused
 
 	// Doubly linked list over 0..n+1, with 0 the head sentinel and n+1 the
 	// tail sentinel; listed nodes appear in increasing order.

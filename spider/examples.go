@@ -41,13 +41,13 @@ func Fence(n int) *Spider {
 
 // Example returns the 9-vertex running example of Section 4 (page 12):
 //
-//	         1
-//	      ┌──┼──┐
-//	      2  6  8        positive vertices: 2,3,5,6,9
-//	     ┌┴┐ │  │        negative vertices: 4,7,8
-//	     3 5 7  9
-//	     │
-//	     4
+//	    1
+//	 ┌──┼──┐
+//	 2  6  8        positive vertices: 2,3,5,6,9
+//	┌┴┐ │  │        negative vertices: 4,7,8
+//	3 5 7  9
+//	│
+//	4
 //
 // with U_1={2,6,9}, V_1={4,7,8}, and 60 order ideals.
 func Example() *Spider {

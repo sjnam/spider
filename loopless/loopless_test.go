@@ -29,11 +29,11 @@ func testSpiders(t *testing.T) map[string]*spider.Spider {
 	}
 	polish := []string{
 		"...+-",               // 1 -> 2 <- 3 (Section 2 example)
-		"....+-.--..+-..-+",    // the running example again
+		"....+-.--..+-..-+",   // the running example again
 		".....----",           // a positive chain of 5
 		"....++-.+",           // chain nested in a near-set (the §16-bug minimal case)
-		".....---..+++.+..++",  // a larger chain-in-near-set shape
-		"..+....+--.+..-+-.+",  // another mixed shape
+		".....---..+++.+..++", // a larger chain-in-near-set shape
+		"..+....+--.+..-+-.+", // another mixed shape
 	}
 	for _, p := range polish {
 		s, err := spider.Parse(p)

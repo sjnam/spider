@@ -35,7 +35,7 @@ func (s *Spider) computeTables() {
 	s.umaxbit = make([]int, n+1)
 	s.vmaxbit = make([]int, n+1)
 	s.buildTreeLinks()
-	s.progenitors() // §7
+	s.progenitors()  // §7
 	s.fillMaxLinks() // §8
 	s.evenTables()   // §10
 	s.maxbits()      // §11

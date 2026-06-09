@@ -22,14 +22,14 @@
 //	         return false;
 //	end.
 //
-// where (k', k'') = (k+1, k+2) when k is odd, (k+2, k+1) when k is even.
+// where (k', k”) = (k+1, k+2) when k is odd, (k+2, k+1) when k is even.
 //
 // Two things make nudge more interesting than poke/bump:
 //
 //   - It cannot start from 00…0 with everyone at awake0. The valid starting
 //     state sets a_1…a_n to the first n bits of 000111000111…, and each troll
 //     begins at awake1 (rather than awake0) exactly when its lamp starts on.
-//   - A troll invokes its neighbours k' and k'', which jump by 1 or 2, so a
+//   - A troll invokes its neighbours k' and k”, which jump by 1 or 2, so a
 //     poke chain visits a non-contiguous set of trolls (e.g. {1,2,4}).
 //
 // As with bump, ret() makes the goroutine's program counter the coroutine
@@ -49,8 +49,8 @@ type result struct {
 
 type troll struct {
 	k        int
-	kp, kpp  int   // k' and k''
-	n        int   // number of trolls
+	kp, kpp  int // k' and k''
+	n        int // number of trolls
 	poke     chan struct{}
 	reply    chan result
 	all      []*troll // all[1..n], so a troll can invoke k' and k''

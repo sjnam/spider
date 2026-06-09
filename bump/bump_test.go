@@ -60,7 +60,7 @@ func TestSequenceIsConstrainedGray(t *testing.T) {
 // page 7 of the paper (forward half, then reverse).
 func TestMatchesPaperN3(t *testing.T) {
 	want := []string{
-		"000", // initial
+		"000",               // initial
 		"001", "011", "111", // forward
 		"111", "011", "001", "000", // reverse (after the midpoint false)
 	}

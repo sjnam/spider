@@ -81,7 +81,7 @@ func TestCountsMatchPaper(t *testing.T) {
 // page 11 of the paper, forward half then reverse.
 func TestMatchesPaperN4(t *testing.T) {
 	want := []string{
-		"0001", // initial configuration
+		"0001",                                                 // initial configuration
 		"0000", "0100", "0101", "0111", "1111", "1101", "1100", // forward
 		"1100", "1101", "1111", "0111", "0101", "0100", "0000", "0001", // reverse
 	}
