@@ -15,6 +15,11 @@ A faithful Go implementation of the algorithms in Knuth & Ruskey's paper
 
 The authors playfully call the problem **"spider squishing."**
 
+![demo](docs/demo.gif)
+
+> The `bump` coroutines, then the active list on the 9-vertex example spider.
+> Regenerate with `vhs docs/demo.tape` — see [docs/DEMO.md](docs/DEMO.md).
+
 ## The problem
 
 Generate every bit string $a_1 a_2 \dots a_n \in \{0,1\}^n$ satisfying the
