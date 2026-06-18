@@ -79,7 +79,9 @@ $ ctangle spiders.w ; cc -o spiders spiders.c ; ./spiders "....++-.+" 0
 ```
 
 The corrected program lists all 10 ideals (`00000 01000 01100 01110 11110 11111
-11101 11100 11000 11001`) in valid single-bit Gray order.
+11101 11100 11000 11001`) in valid single-bit Gray order:
+
+![the bug-case spider, generated correctly](../docs/demo-bug.gif)
 
 ## What goes wrong
 

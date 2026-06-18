@@ -117,6 +117,8 @@ bump trolls — n=3  (chain: 0 <= a_1 <= … <= a_n <= 1)
 The pattern column and the set of trolls each poke wakes match the tables on
 pages 5, 7, and 11 of the paper exactly.
 
+![poke, bump, and nudge](docs/demo-coroutines.gif)
+
 ### Active-list / loopless demo (§8, §13–29)
 
 ```bash

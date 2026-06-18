@@ -1,8 +1,14 @@
 # Regenerating the demo GIF
 
-The animation in the top-level README is produced with
-[VHS](https://github.com/charmbracelet/vhs) from [`demo.tape`](demo.tape) — a
-declarative script, so the GIF is fully reproducible (no live screen recording).
+The animations in the READMEs are produced with
+[VHS](https://github.com/charmbracelet/vhs) from declarative `.tape` scripts, so
+the GIFs are fully reproducible (no live screen recording).
+
+| tape | GIF | shown in |
+| --- | --- | --- |
+| [`demo.tape`](demo.tape) | `demo.gif` | top of the root README |
+| [`demo-coroutines.tape`](demo-coroutines.tape) | `demo-coroutines.gif` | README coroutine demo (poke/bump/nudge) |
+| [`demo-bug.tape`](demo-bug.tape) | `demo-bug.gif` | `bugreport/` — the `....++-.+` spider, now correct |
 
 ## One-time setup
 
@@ -16,8 +22,10 @@ brew install vhs            # also pulls ttyd and ffmpeg
 From the repository root:
 
 ```sh
-vhs docs/demo.tape          # writes docs/demo.gif
-git add docs/demo.gif && git commit -m "Update demo GIF"
+vhs docs/demo.tape             # writes docs/demo.gif
+vhs docs/demo-coroutines.tape  # writes docs/demo-coroutines.gif
+vhs docs/demo-bug.tape         # writes docs/demo-bug.gif
+git add docs/*.gif && git commit -m "Update demo GIFs"
 ```
 
 ## Tweaking
