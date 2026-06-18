@@ -1,5 +1,7 @@
 # SPIDERS
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/sjnam/spider.svg)](https://pkg.go.dev/github.com/sjnam/spider)
+
 > 🏆 **Acknowledged and fixed by Donald E. Knuth.** A bug this project found in
 > Knuth's _SPIDERS_ program was confirmed and corrected in the current
 > [`spiders.w`](https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w)
@@ -148,6 +150,23 @@ This trace reproduces the example on page 21 of the paper character for characte
 - **`loopless`** — matches `active` pattern for pattern on every spider (named,
   Polish, and 500 random), after correcting the SPIDERS `umaxscope`/`vmaxscope`
   bug; the fix is verified exhaustively over all spiders with ≤ 8 vertices.
+
+## Benchmark — looplessness isn't free
+
+`go test -bench . ./loopless` times one full listing per spider. The amortized
+`active` list beats the truly-loopless generator on every spider tried (≈1.3–2.2×):
+
+```text
+BenchmarkGenerate/active/noarcs16     569638 ns/op
+BenchmarkGenerate/loopless/noarcs16   770591 ns/op
+BenchmarkGenerate/active/fence16       22481 ns/op
+BenchmarkGenerate/loopless/fence16     37362 ns/op
+```
+
+This empirically confirms the paper's own §15 remark: the contortions needed for
+looplessness "actually cause the total execution time to be longer than it would
+be with a more straightforward algorithm." Looplessness buys a worst-case
+guarantee on the work _between_ two outputs, not overall speed.
 
 ## Possible next steps
 
