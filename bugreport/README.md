@@ -1,9 +1,19 @@
 # Bug report: `umaxscope`/`vmaxscope` in Knuth's SPIDERS
 
+> ✅ **Resolved — acknowledged and fixed by Donald E. Knuth (June 2026).** The
+> current [`spiders.w`](https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w)
+> adopts this fix; its Introduction now reads _"My original version of this code,
+> written in December 2001, had a serious error, which is corrected on the
+> present version (June 2026),"_ and the new section credits it: _"The code here
+> is due to Soojin Nam, who kindly pointed out in 2026 that my original
+> recurrences were fatally flawed. [See https://github.com/sjnam/spider/tree/main/bugreport.]"_
+> The `spiders.w` and `spiders.ch` below are kept as the snapshot of the bug and
+> its fix at the time of the report.
+
 A bug in **SPIDERS** (`https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w`)
-makes it generate labelings that are **not order ideals**, and on some inputs
-loop forever. This directory has the report, the original program, and a CWEB
-change file with the fix.
+made it generate labelings that are **not order ideals**, and on some inputs
+loop forever. This directory has the report, the original (pre-fix) program, and
+a CWEB change file with the fix.
 
 | file | what |
 | --- | --- |

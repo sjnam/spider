@@ -1,5 +1,12 @@
 # SPIDERS
 
+> 🏆 **Acknowledged and fixed by Donald E. Knuth.** A bug this project found in
+> Knuth's _SPIDERS_ program was confirmed and corrected in the current
+> [`spiders.w`](https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w)
+> (June 2026), which adopts this repo's fix and credits it: _"The code here is
+> due to Soojin Nam, who kindly pointed out in 2026 that my original recurrences
+> were fatally flawed."_ See [`bugreport/`](bugreport/).
+
 A faithful Go implementation of the algorithms in Knuth & Ruskey's paper
 **["Efficient Coroutine Generation of Constrained Gray Sequences"](https://www-cs-faculty.stanford.edu/~knuth/papers/p160.ps.gz)**
 (dedicated to the memory of Ole-Johan Dahl).
