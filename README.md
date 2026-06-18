@@ -48,7 +48,7 @@ The paper presents the same algorithm two ways; this repo implements **both** an
 
 | world | packages | what it is |
 | --- | --- | --- |
-| **cooperating coroutines (trolls)** | `poke` `bump` `nudge` | each troll $T_k$ is one goroutine — a near-line-by-line transcription of the paper's pseudocode. |
+| **cooperating coroutines (trolls)** | `poke` `bump` `nudge` `gen` | each troll $T_k$ is one goroutine — a near-line-by-line transcription of the paper's pseudocode. `gen` (§5) is the general form for any spider, with `poke`/`bump`/`nudge` as special cases. |
 | **active list** | `active` | the same coroutine swarm "compiled" into an explicit data structure + an iterative loop (amortized $O(1)$). |
 
 The key trick is the `ret`/`invoke` helpers, which make **a goroutine's program
@@ -70,6 +70,7 @@ spider/
 ├── spider/    spider data model (children/sign/scope, near-sets U_k/V_k, ideal counts n_k)
 │              §6 launching (initial α, transition τ, final ω)
 │              SPIDERS §7–12 tables, Polish-notation Parse, brute-force enumerator
+├── gen/       §5 general gen[k](l) coroutines — any spider (poke/bump/nudge unified)
 ├── active/    §8 active-list generator — any spider, amortized O(1)
 ├── loopless/  §13–29 loopless generator (port of Knuth's SPIDERS C program, O(1)/step)
 ├── bugreport/ a real bug found in Knuth's SPIDERS, with a CWEB change-file fix
@@ -124,6 +125,7 @@ pages 5, 7, and 11 of the paper exactly.
 ```bash
 go run . -coro active   -spider example     # the 9-vertex example of §4 (60 ideals)
 go run . -coro loopless -spider example     # same, via the loopless generator
+go run . -coro gen      -spider example     # the general §5 coroutines
 go run . -coro active   -spider chain -n 5
 go run . -coro active   -spider '....++-.+' # any spider as a Polish string
 ```
@@ -154,6 +156,9 @@ This trace reproduces the example on page 21 of the paper character for characte
 - **`active`** — exact output match with `poke`/`bump`/`nudge` on
   NoArcs/Chain/Fence, a complete Gray code agreeing with `AllIdeals` on arbitrary
   mixed spiders, and the page-21 trace.
+- **`gen`** — the general §5 coroutines match `active` on named, Polish, and 400
+  random spiders (`-race` clean), and reduce exactly to `poke`/`bump`/`nudge` on
+  the empty graph, the chain, and the fence.
 - **`loopless`** — matches `active` pattern for pattern on every spider (named,
   Polish, and 500 random), after correcting the SPIDERS `umaxscope`/`vmaxscope`
   bug; the fix is verified exhaustively over all spiders with ≤ 8 vertices.
@@ -179,8 +184,9 @@ guarantee on the work _between_ two outputs, not overall speed.
 
 - [x] **§13–29 loopless $O(1)$/step** — the `loopless` package (focus pointers +
   lazy fixups), with the SPIDERS `umaxscope`/`vmaxscope` bug fixed; matches `active`.
-- [ ] **general `gen` coroutines (§5)** — a goroutine version unifying
-  poke/bump/nudge via the `maxu`/`maxv`/`prev` tables.
+- [x] **general `gen` coroutines (§5)** — the `gen` package, a goroutine version
+  unifying poke/bump/nudge via the `maxu`/`maxv`/`prev` tables; matches `active`
+  and reduces to poke/bump/nudge on the empty graph, chain, and fence.
 - [ ] **TUI visualization** — animate the spider and the active list live.
 
 ## References

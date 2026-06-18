@@ -75,6 +75,7 @@ type Tables struct {
 	Par, Sign, Scope []int
 	Rchild, Lsib     []int
 	Umax, Vmax       []int
+	Prev             []int // previous element in the same progenitorial list
 	Umin, Vmin       []int
 	Ueven, Veven     []int
 	Umaxbit, Vmaxbit []int
@@ -101,6 +102,7 @@ func (s *Spider) Tables() Tables {
 		Par: slices.Clone(s.parent), Sign: sign, Scope: slices.Clone(s.scope),
 		Rchild: slices.Clone(s.rchild), Lsib: slices.Clone(s.lsib),
 		Umax: slices.Clone(s.umax), Vmax: slices.Clone(s.vmax),
+		Prev: slices.Clone(s.prv),
 		Umin: slices.Clone(s.umin), Vmin: slices.Clone(s.vmin),
 		Ueven: slices.Clone(s.ueven), Veven: slices.Clone(s.veven),
 		Umaxbit: slices.Clone(s.umaxbit), Vmaxbit: slices.Clone(s.vmaxbit),

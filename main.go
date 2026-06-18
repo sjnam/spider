@@ -13,6 +13,7 @@ import (
 
 	"github.com/sjnam/spider/active"
 	"github.com/sjnam/spider/bump"
+	"github.com/sjnam/spider/gen"
 	"github.com/sjnam/spider/loopless"
 	"github.com/sjnam/spider/nudge"
 	"github.com/sjnam/spider/poke"
@@ -35,18 +36,73 @@ type listGen interface {
 }
 
 func main() {
-	coro := flag.String("coro", "poke", "poke, bump, nudge, active, or loopless")
+	coro := flag.String("coro", "poke", "poke, bump, nudge, gen, active, or loopless")
 	n := flag.Int("n", 3, "number of trolls/bits (poke, bump, nudge)")
-	periods := flag.Int("periods", 1, "how many full periods to print (poke, bump, nudge)")
-	which := flag.String("spider", "example", "spider for -coro active/loopless: example, noarcs, chain, fence, or a Polish string like \"...+-\"")
+	periods := flag.Int("periods", 1, "how many full periods to print (poke, bump, nudge, gen)")
+	which := flag.String("spider", "example", "spider for -coro gen/active/loopless: example, noarcs, chain, fence, or a Polish string like \"...+-\"")
 	steps := flag.Int("steps", 0, "steps to print for -coro active/loopless (0 = one full listing)")
 	flag.Parse()
 
-	if *coro == "active" || *coro == "loopless" {
+	switch *coro {
+	case "active", "loopless":
 		runActive(*coro, *which, *n, *steps)
+	case "gen":
+		runGen(*which, *n, *periods)
+	default:
+		runTrolls(*coro, *n, *periods)
+	}
+}
+
+// buildSpider resolves the -spider flag to a Spider (a name, or a Polish string).
+func buildSpider(which string, n int) *spider.Spider {
+	switch which {
+	case "example":
+		return spider.Example()
+	case "noarcs":
+		return spider.NoArcs(n)
+	case "chain":
+		return spider.Chain(n)
+	case "fence":
+		return spider.Fence(n)
+	default:
+		s, err := spider.Parse(which) // treat anything else as a Polish description
+		if err != nil {
+			fmt.Printf("unknown -spider %q: not a name (example, noarcs, chain, fence) and %v\n", which, err)
+			return nil
+		}
+		return s
+	}
+}
+
+// runGen drives the general gen coroutines over a spider, printing each pattern
+// and the set of gen-coroutines the poke woke (cf. the poke/bump/nudge demos).
+func runGen(which string, n, periods int) {
+	s := buildSpider(which, n)
+	if s == nil {
 		return
 	}
-	runTrolls(*coro, *n, *periods)
+	ts := gen.New(s)
+	defer ts.Close()
+	fmt.Printf("gen coroutines — spider=%s  (%d ideals)\n\n", which, s.Total())
+
+	bitStr := func() string {
+		var b strings.Builder
+		for _, v := range ts.Bits() {
+			fmt.Fprintf(&b, "%d", v)
+		}
+		return b.String()
+	}
+
+	fmt.Printf("%s   initial state\n", bitStr())
+	falses, want := 0, periods*2
+	for falses < want {
+		changed, reached := ts.Poke()
+		fmt.Printf("%s   gen%s = %t\n", bitStr(), setStr(reached), changed)
+		if !changed {
+			falses++
+			fmt.Println(strings.Repeat("-", s.N()))
+		}
+	}
 }
 
 func runTrolls(coro string, n, periods int) {
@@ -88,23 +144,9 @@ func runTrolls(coro string, n, periods int) {
 }
 
 func runActive(engine, which string, n, steps int) {
-	var s *spider.Spider
-	switch which {
-	case "example":
-		s = spider.Example()
-	case "noarcs":
-		s = spider.NoArcs(n)
-	case "chain":
-		s = spider.Chain(n)
-	case "fence":
-		s = spider.Fence(n)
-	default:
-		var err error
-		s, err = spider.Parse(which) // treat anything else as a Polish description
-		if err != nil {
-			fmt.Printf("unknown -spider %q: not a name (example, noarcs, chain, fence) and %v\n", which, err)
-			return
-		}
+	s := buildSpider(which, n)
+	if s == nil {
+		return
 	}
 	fmt.Printf("%s — spider=%s  (%d ideals, generated in Gray order)\n\n", engine, which, s.Total())
 
