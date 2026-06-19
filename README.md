@@ -73,9 +73,12 @@ spider/
 ├── gen/       §5 general gen[k](l) coroutines — any spider (poke/bump/nudge unified)
 ├── active/    §8 active-list generator — any spider, amortized O(1)
 ├── loopless/  §13–29 loopless generator (port of Knuth's SPIDERS C program, O(1)/step)
+├── tui/       interactive terminal visualizer (dependency-free; step / autoplay)
 ├── bugreport/ a real bug found in Knuth's SPIDERS, with a CWEB change-file fix
 └── main.go    demo driver
 ```
+
+The whole module is **dependency-free** — standard library only.
 
 > **We found a real bug in Knuth's published SPIDERS program.** While building
 > `loopless`, the provided `spiders.c` turned out to emit _non-ideal_ labelings
@@ -146,6 +149,19 @@ active list — spider=example  (60 ideals, generated in Gray order)
 
 This trace reproduces the example on page 21 of the paper character for character.
 
+### Interactive TUI
+
+```bash
+go run . -coro tui -spider example   # arrow keys to step, a to autoplay, q to quit
+```
+
+![interactive TUI](docs/demo-tui.gif)
+
+A dependency-free terminal visualizer: the spider tree (↑ positive child, ↓
+negative, ● root), the bit string, and the active list, all colour-coded by
+state — active/awake, active/asleep, or off the list — with the just-flipped bit
+highlighted.
+
 ## What is verified
 
 - **`poke`/`bump`/`nudge`** — one bit per step, every valid pattern exactly
@@ -180,14 +196,15 @@ looplessness "actually cause the total execution time to be longer than it would
 be with a more straightforward algorithm." Looplessness buys a worst-case
 guarantee on the work _between_ two outputs, not overall speed.
 
-## Possible next steps
+## Roadmap (all done 🎉)
 
 - [x] **§13–29 loopless $O(1)$/step** — the `loopless` package (focus pointers +
   lazy fixups), with the SPIDERS `umaxscope`/`vmaxscope` bug fixed; matches `active`.
 - [x] **general `gen` coroutines (§5)** — the `gen` package, a goroutine version
   unifying poke/bump/nudge via the `maxu`/`maxv`/`prev` tables; matches `active`
   and reduces to poke/bump/nudge on the empty graph, chain, and fence.
-- [ ] **TUI visualization** — animate the spider and the active list live.
+- [x] **TUI visualization** — the `tui` package: a dependency-free terminal
+  visualizer of the spider tree and active list, with step / autoplay.
 
 ## References
 

@@ -9,6 +9,7 @@ the GIFs are fully reproducible (no live screen recording).
 | [`demo.tape`](demo.tape) | `demo.gif` | top of the root README |
 | [`demo-coroutines.tape`](demo-coroutines.tape) | `demo-coroutines.gif` | README coroutine demo (poke/bump/nudge) |
 | [`demo-bug.tape`](demo-bug.tape) | `demo-bug.gif` | `bugreport/` — the `....++-.+` spider, now correct |
+| [`demo-tui.tape`](demo-tui.tape) | `demo-tui.gif` | README interactive-TUI section (drives the TUI with keystrokes) |
 
 ## One-time setup
 
@@ -25,6 +26,7 @@ From the repository root:
 vhs docs/demo.tape             # writes docs/demo.gif
 vhs docs/demo-coroutines.tape  # writes docs/demo-coroutines.gif
 vhs docs/demo-bug.tape         # writes docs/demo-bug.gif
+vhs docs/demo-tui.tape         # writes docs/demo-tui.gif
 git add docs/*.gif && git commit -m "Update demo GIFs"
 ```
 

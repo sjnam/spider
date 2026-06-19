@@ -18,6 +18,7 @@ import (
 	"github.com/sjnam/spider/nudge"
 	"github.com/sjnam/spider/poke"
 	"github.com/sjnam/spider/spider"
+	"github.com/sjnam/spider/tui"
 )
 
 // trolls is the small surface the three coroutine families share.
@@ -48,6 +49,12 @@ func main() {
 		runActive(*coro, *which, *n, *steps)
 	case "gen":
 		runGen(*which, *n, *periods)
+	case "tui":
+		if s := buildSpider(*which, *n); s != nil {
+			if err := tui.Run(s, *which); err != nil {
+				fmt.Println(err)
+			}
+		}
 	default:
 		runTrolls(*coro, *n, *periods)
 	}
@@ -118,7 +125,7 @@ func runTrolls(coro string, n, periods int) {
 		ts = nudge.New(n)
 		fmt.Printf("nudge trolls — n=%d  (fence: a_1 <= a_2 >= a_3 <= …)\n\n", n)
 	default:
-		fmt.Printf("unknown -coro %q (want poke, bump, nudge, or active)\n", coro)
+		fmt.Printf("unknown -coro %q (want poke, bump, nudge, gen, active, loopless, or tui)\n", coro)
 		return
 	}
 	defer ts.Close()
