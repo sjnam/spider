@@ -1,6 +1,4 @@
-# SPIDERS
-
-[![Go Reference](https://pkg.go.dev/badge/github.com/sjnam/spider.svg)](https://pkg.go.dev/github.com/sjnam/spider)
+# Spider squishing
 
 > 🏆 **Acknowledged and fixed by Donald E. Knuth.** A bug this project found in
 > Knuth's _SPIDERS_ program was confirmed and corrected in the current
@@ -216,12 +214,3 @@ guarantee on the work _between_ two outputs, not overall speed.
 - D. E. Knuth, _The Art of Computer Programming_, Vol. 4, §7.2.1.1 (Generating
   all $n$-tuples).
 - D. E. Knuth, _SPIDERS_, `https://www-cs-faculty.stanford.edu/~knuth/programs/spiders.w`.
-
-## License
-
-The Go code in this repository is released under the [MIT License](LICENSE).
-
-The files under [`bugreport/`](bugreport/) are an exception: `spiders.w` is
-Donald E. Knuth's program, included unmodified, and `spiders.ch` is a change
-file against it. They are governed by Knuth's own terms, not by the MIT license,
-and are included here only to document the bug and its fix.
